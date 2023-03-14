@@ -1,0 +1,54 @@
+version: '2'
+
+services:
+  galaxy-nginx:
+    container_name: galaxy-nginx
+    working_dir: /etc/nginx/conf.d
+    image: nginx:1.12-alpine
+    environment:
+      TZ: Europe/Moscow
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf:/etc/nginx/conf.d:rw
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/logs/nginx
+    depends_on:
+      - galaxy-back
+      - galaxy-front
+    restart: unless-stopped
+    networks:
+      galaxy:
+        aliases:
+          - test.galaxy.ru
+        ipv4_address: 192.168.160.10
+
+  galaxy-back:
+    container_name: galaxy-back
+    build:
+      context: ./back
+    volumes:
+      - ./back/bin:/home/application/bin
+      - ./back/ServerTest.jar:/home/application/ServerTest.jar
+    restart: unless-stopped
+    networks:
+      galaxy:
+        ipv4_address: 192.168.160.11
+
+  galaxy-front:
+    container_name: galaxy-front
+    build:
+      context: ./front
+    volumes:
+      - ./front/application:/app
+    restart: unless-stopped
+    networks:
+      galaxy:
+        ipv4_address: 192.168.160.12
+
+networks:
+  galaxy:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.160.0/24
+          gateway: 192.168.160.1
