@@ -21,7 +21,8 @@ import {
   timer
 } from "rxjs";
 import { GetParamsResponse } from "../../interfaces/get-params-response.interface";
-import { ProcessResponse } from "../../interfaces/process-response.interface";
+import { ProcessService } from "../../services/process.service";
+import { ModifiedProcessResponse } from "../../interfaces/modified-process-response.interface";
 
 @Component({
   selector: 'app-counter',
@@ -38,15 +39,16 @@ export class CounterComponent implements OnInit, OnDestroy {
     delay: new FormControl(null, [Validators.required, Validators.pattern('^\\d+$')]),
   });
 
-  private _responses$: BehaviorSubject<ProcessResponse[]> = new BehaviorSubject([]);
+  private _responses$: BehaviorSubject<ModifiedProcessResponse[]> = new BehaviorSubject([]);
   responses$ = this._responses$.asObservable();
 
-  displayedColumns: string[] = ['status'];
+  displayedColumns: string[] = ['startAt', 'status'];
 
   private submit = false;
   private unsubscribe$: Subject<void> = new Subject();
   constructor(
     private counterService: CounterService,
+    private processService: ProcessService,
     private cdr: ChangeDetectorRef,
   ) {
   }
@@ -87,7 +89,7 @@ export class CounterComponent implements OnInit, OnDestroy {
         exhaustMap(_ => timer(0, this.form.controls.delay.value)
           .pipe(
             take(this.form.controls.count.value),
-            mergeMap(_ => this.counterService.process()),
+            mergeMap(_ => this.processService.modifiedProcess()),
             filter(res => !!res),
           )),
         takeUntil(this.unsubscribe$),
